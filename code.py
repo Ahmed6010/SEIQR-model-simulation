@@ -13,10 +13,10 @@ import matplotlib.gridspec as gridspec
 import numpy as np
 import sys
 
-GREY = (0.58, 0.58, 0.58) #(0.8, 0.8, 0.8, 1)   uninfected
+GREY = (0.58, 0.58, 0.58) #(0.8, 0.8, 0.8, 1)   uninfected 
 ORANGE = (1, 0.38, 0) #(1, 0.49, 0.31)    exposed
 RED = (0.96, 0.15, 0.15) #(1, 0, 0, 1)    infected
-PURPLE = (0, 0.84, 0.84)#(0.48, 0.4, 0.93)  quarantined 
+CYAN = (0, 0.84, 0.84)#(0.48, 0.4, 0.93)  quarantined 
 GREEN = (0, 0.86, 0.03) #(0, 0.5, 0.5, 1)   recovered
 BLACK = (0, 0, 0)          # dead
 
@@ -77,6 +77,8 @@ class simpleNetworkSEIQRModel():
         self.infectedTimesHeap = []
         self.agentCoordinates = {}
         self.record = []
+        self.timeList = []
+        
  
         allAgents = list(range(self.N))   #modification
         random.shuffle(allAgents)
@@ -100,7 +102,7 @@ class simpleNetworkSEIQRModel():
         #print('time :', self.t) 
         
          # create plot
-        self.fig = plt.figure()
+        self.fig = plt.figure(figsize=(12, 5))
         gs =  gridspec.GridSpec(ncols=4, nrows=2, figure=self.fig)
         self.axes = self.fig.add_subplot(gs[0:, 2:], projection="polar")
         self.axes.grid(False)
@@ -110,9 +112,9 @@ class simpleNetworkSEIQRModel():
         
         #xy = np.zeros(0)
         self.axes2 = self.fig.add_subplot(gs[0:, :-2])
-        self.pltLine, = self.axes2.plot(0, 0, label="S")
+        #self.axes2.set_xlim(0)
+        #self.axes2.set_ylim(0)
         
-        self.axes2.legend()
         
         indices = np.arange(0, self.N) + 0.5
         self.xCoordinates = np.pi * (1 + 5**0.5) * indices
@@ -120,17 +122,17 @@ class simpleNetworkSEIQRModel():
         self.scat = self.axes.scatter(self.xCoordinates, self.yCoordinates, s=5, facecolors=GREY, edgecolors=None)    
         
         # create annotations
-        self.day_text = self.axes.annotate(
-            "Day 0", xy=[np.pi / 2, 1], ha="center", va="bottom")
-        self.infected_text = self.axes.annotate(
-            "Infected: 0", xy=[3 * np.pi / 2, 1], ha="center", va="top", color=RED)
-        self.deaths_text = self.axes.annotate(
-            "\nDeaths: 0", xy=[3 * np.pi / 2, 1], ha="center", va="top", color=BLACK)
-        self.recovered_text = self.axes.annotate(
-            "\n\nRecovered: 0", xy=[3 * np.pi / 2, 1], ha="center", va="top", color=GREEN)
+        self.day_text = self.axes.annotate("Day", xy=[np.pi / 2, 1], ha="center", va="bottom")
+        #self.exposed_text = self.axes.annotate("Infected: 0", xy=[3 * np.pi / 2, 1], ha="center", va="top", color=ORANGE)
+        self.infected_text = self.axes.annotate("\nInfected: 0", xy=[3 * np.pi / 2, 1], ha="center", va="top", color=RED)
+        #self.quarantined_text = self.axes.annotate("\nDeaths: 0", xy=[3 * np.pi / 2, 1], ha="center", va="top", color=CYAN)
+        self.recovered_text = self.axes.annotate("\n\nRecovered: 0", xy=[3 * np.pi / 2, 1], ha="center", va="top", color=GREEN)
+        self.deaths_text = self.axes.annotate("\nDeaths: 0", xy=[3 * np.pi / 2, 1], ha="center", va="top", color=BLACK)
+        #self.day_text.set_animated(True)
+        #self.infected_text.set_animated(True)
+       
         
-        
-    """def init(self):
+    """def init(self):     
         indices = np.arange(0, self.N) + 0.5
         self.xCoordinates = np.pi * (1 + 5**0.5) * indices
         self.yCoordinates = np.sqrt(indices / self.N)
@@ -140,12 +142,17 @@ class simpleNetworkSEIQRModel():
     def updateScatterPlot(self, i):
         #print('fl') 
         #templist = list(self.agentCoordinates.values()) #♣ np.array
-        if len(self.record) == 0 and len(self.sList) == 0:
+        if len(self.record) == 0:
             self.anim.event_source.stop()
+            print('animation stop')
         else:    
             self.scat.set_facecolor(self.record.pop(0))
-            self.pltLine.set_data(self.ind.pop(0), self.sList.pop(0))
-            #print('->',self.t)
+            #update_text
+            self.day_text.set_text("Day {}".format(self.timeList.pop(0)))
+            self.infected_text.set_text("Infected: {}".format(self.iList.pop(0)))
+            self.recovered_text.set_text("\n\nRecovered: {}".format(self.rList.pop(0)))
+            #print('1')
+        return self.scat, self.day_text, self.infected_text, self.recovered_text,
         #templist = list(self.agentCoordinates.values()) #♣ np.array  networkResults
         #self.axes.scatter(self.xCoordinates, self.yCoordinates, s=5, color=np.array(templist))
         
@@ -154,10 +161,24 @@ class simpleNetworkSEIQRModel():
         #for idx, val in enumerate(self.agentCoordinates):
             #colr = self.agentCoordinates[val]
             #self.axes.scatter(self.xCoordinates[idx], self.yCoordinates[idx], s=5, color= colr)
-        return self.scat, self.pltLine,      
+           
     
-    #def updateLinePlot(self, i):
-        
+    """def init(self):
+        self.pltLine.set_data([], [])
+        return (self.pltLine,)
+    
+    def updateLinePlot(self, i):
+        if len(self.sListRecord) == 0:
+            self.anim2.event_source.stop()
+            print('line stop')
+        else:
+            self.pltLine.set_data(self.ind.pop(0), self.sListRecord.pop(0))
+            #print(len(self.ind[0]))
+            #print(len(self.sListRecord[0]))
+            print('2')
+        return (self.pltLine,) """
+    
+    
     
     def latentAgent(self,agent):
         self.sAgentList.remove(agent)
@@ -297,7 +318,7 @@ class simpleNetworkSEIQRModel():
                 if quarantinedAgent in self.iAgentList:
                     self.iAgentList.remove(quarantinedAgent)
                     self.qAgentList.append(quarantinedAgent)
-                    self.agentCoordinates.update({quarantinedAgent: PURPLE})
+                    self.agentCoordinates.update({quarantinedAgent: CYAN})
                 
             """for infectedAgent in recoverFromI:
                 self.iAgentList.remove(infectedAgent)
@@ -332,10 +353,15 @@ class simpleNetworkSEIQRModel():
             #self.anim.event_source.start()
             #plt.show()
             #self.startAnim()    
-            
+               
+           
             #templist = list(self.agentCoordinates.values()) #♣ np.array
             #self.scat.set_edgecolor(np.array(templist))
             self.record.append(list(self.agentCoordinates.values()))
+            
+            
+            
+            
             #♣print(list(self.agentCoordinates.values()))
             self.t += 1
 
@@ -345,7 +371,7 @@ class simpleNetworkSEIQRModel():
             print(self.qAgentList , '\tI->Q')
             print(self.rAgentList , '\tI->R')"""
 
-            print('t', self.t, 'numS', len(self.sAgentList),'numE', len(self.eAgentList), 'numI', len(self.iAgentList), 'numQ', len(self.qAgentList), 'numR', len(self.rAgentList))
+            #print('t', self.t, 'numS', len(self.sAgentList),'numE', len(self.eAgentList), 'numI', len(self.iAgentList), 'numQ', len(self.qAgentList), 'numR', len(self.rAgentList))
             line = str(self.t) + '\t' + str(len(self.sAgentList)) + '\t\t' + str(len(self.eAgentList)) + '\t\t' + str(len(self.iAgentList)) + '\t\t' + str(len(self.qAgentList))+ '\t\t' + str(len(self.rAgentList)) + '\n'
 
 
@@ -398,18 +424,32 @@ class simpleNetworkSEIQRModel():
             random.shuffle(self.eAgentList)
             #self.allAgents = range(self.N)        modification
            
-            print("/////////////////////////////////////////////////////////////////////") 
-            
+            #print("/////////////////////////////////////////////////////////////////////") 
+        
         print(sys.getsizeof(self.record)) 
-        self.ind = list(range(0, self.t))  
+        self.timeList = list(range(0, self.t))
         return [self.sList, self.eList, self.iList, self.qList, self.rList, self.newIList]  #, self.latencyTimesHeap
     
     
     
     
-    def animation(self):
+    def scatterPlotAnimation(self):
         self.anim = animation.FuncAnimation(fig=self.fig, func=self.updateScatterPlot, interval=500, blit=True) #, frames= self.t,repeat=True, interval=1000
         #self.anim.save('/animation.gif', writer='imagemagick', fps=60)
+        #self.anim.save('Animation.gif', writer='imagemagick', fps=30)
+        Writer = animation.writers['ffmpeg']
+        writer = Writer(fps=2, metadata={'artist': 'Me'}, bitrate=1800)
+
+        #self.anim.save('Animation.mp4', writer)
+    
+    def linePlotAnimation(self):
+        #self.anim2 = animation.FuncAnimation(fig=self.fig, func=self.updateLinePlot, init_func=self.init,  interval=200, blit=True) # frames=100,
+        self.axes2.plot(list(range(0, self.t)), self.sList, label="S", c= GREY)
+        self.axes2.plot(list(range(0, self.t)), self.eList, label="E", c= ORANGE)
+        self.axes2.plot(list(range(0, self.t)), self.iList, label="I", c= RED)
+        self.axes2.plot(list(range(0, self.t)), self.qList, label="Q", c= CYAN)
+        self.axes2.plot(list(range(0, self.t)), self.rList, label="R", c= GREEN)
+        self.axes2.legend()
     
     def graphPlot(self):
         for v in self.graph.vs():
@@ -448,8 +488,8 @@ if __name__=='__main__':
     omega = 1/14  # I -> R rate
     v = 0.1
     #condition initiale  115  9 
-    S = 4500
-    E = 15
+    S = 500
+    E = 3
     I = 0
     Q = 0
     R = 0
@@ -459,7 +499,9 @@ if __name__=='__main__':
     myNetworkModel = simpleNetworkSEIQRModel(b, e, g, rho, omega, v, S, E, I ,Q , R , p, nei)
     
     networkResults = myNetworkModel.run()
-    myNetworkModel.animation()
+    myNetworkModel.linePlotAnimation()
+    myNetworkModel.scatterPlotAnimation()
+    
     #myNetworkModel.startAnim()
     #myNetworkModel.stopAnim()
     myNetworkModel.graphPlot()
