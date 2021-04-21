@@ -64,6 +64,8 @@ class simpleNetworkSEIQRModel():
         self.iAgentList = []
         self.qAgentList = []
         self.rAgentList = []
+        self.ndAgentList = [] # nd -> Natural death
+        self.ddAgentList = [] # dd -> disease death
  
         self.sList = []
         self.eList = []
@@ -78,6 +80,9 @@ class simpleNetworkSEIQRModel():
         self.agentCoordinates = {}
         self.record = []
         self.timeList = []
+        self.eRecord = []
+        self.iRecord = [0]
+        self.rRecord = []
         
  
         allAgents = list(range(self.N))   #modification
@@ -103,15 +108,15 @@ class simpleNetworkSEIQRModel():
         
          # create plot
         self.fig = plt.figure(figsize=(12, 5))
-        gs =  gridspec.GridSpec(ncols=4, nrows=2, figure=self.fig)
-        self.axes = self.fig.add_subplot(gs[0:, 2:], projection="polar")
+        gs =  gridspec.GridSpec(ncols=2, nrows=1, figure=self.fig)
+        self.axes = self.fig.add_subplot(gs[0, 1], projection="polar")
         self.axes.grid(False)
         self.axes.set_xticklabels([])
         self.axes.set_yticklabels([])
         self.axes.set_ylim(0, 1)
         
         #xy = np.zeros(0)
-        self.axes2 = self.fig.add_subplot(gs[0:, :-2])
+        self.axes2 = self.fig.add_subplot(gs[0, 0])
         #self.axes2.set_xlim(0)
         #self.axes2.set_ylim(0)
         
@@ -121,14 +126,20 @@ class simpleNetworkSEIQRModel():
         self.yCoordinates = np.sqrt(indices / self.N)
         self.scat = self.axes.scatter(self.xCoordinates, self.yCoordinates, s=5, facecolors=GREY, edgecolors=None)    
         
-        # create annotations
         self.day_text = self.axes.annotate("Day", xy=[np.pi / 2, 1], ha="center", va="bottom")
         #self.exposed_text = self.axes.annotate("Infected: 0", xy=[3 * np.pi / 2, 1], ha="center", va="top", color=ORANGE)
         self.infected_text = self.axes.annotate("\nInfected: 0", xy=[3 * np.pi / 2, 1], ha="center", va="top", color=RED)
         #self.quarantined_text = self.axes.annotate("\nDeaths: 0", xy=[3 * np.pi / 2, 1], ha="center", va="top", color=CYAN)
         self.recovered_text = self.axes.annotate("\n\nRecovered: 0", xy=[3 * np.pi / 2, 1], ha="center", va="top", color=GREEN)
         self.deaths_text = self.axes.annotate("\nDeaths: 0", xy=[3 * np.pi / 2, 1], ha="center", va="top", color=BLACK)
-        #self.day_text.set_animated(True)
+        # create annotations
+        """self.day_text = self.axes.annotate("Day", xy=[np.pi / 2, 1], ha="center", va="bottom")
+        self.exposed_text = self.axes.annotate("Exposed: 0", xy=[3 * np.pi / 2, 1], ha="center", va="top", color=ORANGE)
+        self.infected_text = self.axes.annotate("\nInfected: 0", xy=[3 * np.pi / 2, 1], ha="center", va="top", color=RED)
+        #self.quarantined_text = self.axes.annotate("\nDeaths: 0", xy=[3 * np.pi / 2, 1], ha="center", va="top", color=CYAN)
+        self.recovered_text = self.axes.annotate("\nRecovered: 0", xy=[3 * np.pi / 2, 1], ha="center", va="top", color=GREEN)
+        self.deaths_text = self.axes.annotate("\n\nDeaths: 0", xy=[3 * np.pi / 2, 1], ha="center", va="top", color=BLACK)
+        #self.day_text.set_animated(True)"""
         #self.infected_text.set_animated(True)
        
         
@@ -149,8 +160,9 @@ class simpleNetworkSEIQRModel():
             self.scat.set_facecolor(self.record.pop(0))
             #update_text
             self.day_text.set_text("Day {}".format(self.timeList.pop(0)))
-            self.infected_text.set_text("Infected: {}".format(self.iList.pop(0)))
-            self.recovered_text.set_text("\n\nRecovered: {}".format(self.rList.pop(0)))
+            #self.exposed_text.set_text("Exposed: {}".format(self.eRecord.pop(0)))
+            self.infected_text.set_text("Infected: {}".format(self.iRecord.pop(0)))
+            self.recovered_text.set_text("\n\nRecovered: {}".format(self.rRecord.pop(0)))
             #print('1')
         return self.scat, self.day_text, self.infected_text, self.recovered_text,
         #templist = list(self.agentCoordinates.values()) #♣ np.array  networkResults
@@ -274,7 +286,7 @@ class simpleNetworkSEIQRModel():
                         if (random.random() < self.b):                            
                             newE += self.latentAgent(agent)
                             tempEAgentList.append(agent)
-                            #print("hhhhhhhhhh", agent)
+                            
             
             
             for iAgent in self.iAgentList:
@@ -297,14 +309,17 @@ class simpleNetworkSEIQRModel():
             print(quarantinedList , '\tI->Q')
             print(recoverFromI , '\tI->R')"""
             
-
+            cn = 0
             for infectAgent in infectList:
                 self.eAgentList.remove(infectAgent)
                 self.iAgentList.append(infectAgent)
                 self.agentCoordinates.update({infectAgent: RED})
+                cn += 1 
+            
+            self.iRecord.append(self.iRecord[-1] + cn)    
                 
                 
-                """ind = self.agentCoordinates.index(infectAgent)
+            """ind = self.agentCoordinates.index(infectAgent)
                 lst = list(self.agentCoordinates)
                 lst[ind] = (lst[ind][0],RED)
                 self.agentCoordinates = tuple(lst)"""
@@ -336,6 +351,14 @@ class simpleNetworkSEIQRModel():
                         self.iAgentList.remove(recoverAgent)
                         self.rAgentList.append(recoverAgent) 
                         self.agentCoordinates.update({recoverAgent: GREEN})
+            
+            #recordVar = recordVar + len(self.eAgentList)
+            #self.eRecord.append(recordVar)
+            #if self.iAgentList[-1]: 
+            
+            
+            #♦recordVar3 = recordVar3 + len(self.rAgentList)
+            self.rRecord.append(len(self.rAgentList))
             
             
             #print(recoverList , '\tR')
@@ -425,7 +448,8 @@ class simpleNetworkSEIQRModel():
             #self.allAgents = range(self.N)        modification
            
             #print("/////////////////////////////////////////////////////////////////////") 
-        
+        print('ffffffff',self.iRecord)
+        #print(self.rRecord)
         print(sys.getsizeof(self.record)) 
         self.timeList = list(range(0, self.t))
         return [self.sList, self.eList, self.iList, self.qList, self.rList, self.newIList]  #, self.latencyTimesHeap
@@ -434,7 +458,7 @@ class simpleNetworkSEIQRModel():
     
     
     def scatterPlotAnimation(self):
-        self.anim = animation.FuncAnimation(fig=self.fig, func=self.updateScatterPlot, interval=500, blit=True) #, frames= self.t,repeat=True, interval=1000
+        self.anim = animation.FuncAnimation(fig=self.fig, func=self.updateScatterPlot, interval=1000) # , blit=True
         #self.anim.save('/animation.gif', writer='imagemagick', fps=60)
         #self.anim.save('Animation.gif', writer='imagemagick', fps=30)
         Writer = animation.writers['ffmpeg']
@@ -488,8 +512,8 @@ if __name__=='__main__':
     omega = 1/14  # I -> R rate
     v = 0.1
     #condition initiale  115  9 
-    S = 500
-    E = 3
+    S = 100
+    E = 10
     I = 0
     Q = 0
     R = 0
