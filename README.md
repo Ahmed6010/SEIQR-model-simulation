@@ -1,1 +1,0 @@
-# SEIQR-model-simulation
