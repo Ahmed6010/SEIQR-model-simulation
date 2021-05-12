@@ -44,21 +44,28 @@ class simpleNetworkSEIQRModel():
         self.t = 0
         self.p = p
         self.N = S + E + I + Q + R
-        self.graph = igraph.Graph.Watts_Strogatz(1, self.N, nei=nei, p = p)
-        self.graph.simplify()
+        #self.graph = igraph.Graph.Watts_Strogatz(1, self.N, nei=nei, p = p)
+        self.graph = nx.barabasi_albert_graph(self.N, 3)
+        #self.graph.simplify()
         self.adjacencyList = []
-        for i in range(self.N):
+        for i in self.graph.nodes:
+            self.adjacencyList.append(list(self.graph.neighbors(i)))
+        """for i in range(self.N):
             self.adjacencyList.append([])
  
         for edge in self.graph.es: 
             self.adjacencyList[edge.source].append(edge.target) 
-            self.adjacencyList[edge.target].append(edge.source) 
+            self.adjacencyList[edge.target].append(edge.source) """
+            
+            
         #self.adjacencyList = self.graph.get_adjlist()
-        with open("output1.csv", "w") as f:
-             self.graph.write_edgelist(f)
+        with open("output1.csv", "wb") as file:           # w -> wb
+             #self.graph.write_edgelist(f)
+             nx.write_edgelist(self.graph, file)
         with open('output1.csv', 'r') as file :     
              filedata = file.read()
              filedata = filedata.replace(' ', ',')
+             filedata = filedata.replace(',{}', '')
         with open('output1.csv', 'w') as file:
             file.write("A,B\n")
             file.write(filedata)
@@ -132,7 +139,8 @@ class simpleNetworkSEIQRModel():
         #self.quarantined_text = self.axes.annotate("\nDeaths: 0", xy=[3 * np.pi / 2, 1], ha="center", va="top", color=CYAN)
         self.recovered_text = self.axes.annotate("\n\nRecovered: 0", xy=[3 * np.pi / 2, 1], ha="center", va="top", color=GREEN)
         self.deaths_text = self.axes.annotate("\nDeaths: 0", xy=[3 * np.pi / 2, 1], ha="center", va="top", color=BLACK)
-
+        print(self.eAgentList)
+        
           
     def updateScatterPlot(self, i):
         if len(self.record) == 0:
@@ -237,10 +245,12 @@ class simpleNetworkSEIQRModel():
                 for agent in self.adjacencyList[eAgent]:
                     
                     if agent in self.sAgentList:
-                        if (random.random() < self.b):                            
-                            newE += self.latentAgent(agent)
-                            tempEAgentList.append(agent)
+                        if random.choice([0,1,2]):
+                            if (random.random() < self.b):                            
+                                newE += self.latentAgent(agent)
+                                tempEAgentList.append(agent)
                             
+            
             
             
             for iAgent in self.iAgentList:
@@ -409,7 +419,9 @@ class simpleNetworkSEIQRModel():
         exlFile = exlFile.dropna()
         exlFile = exlFile.sort_index(ascending=False)
         realData = exlFile['Confirmed'].tolist()
+        #self.fig2 = plt.figure()
         #print(realData)
+        #self.axes3 = self.fig2.add_subplot()
         self.axes2.plot(realData[:self.t], label="Real data", c= GREEN)
         #self.axes2.plot(list(range(0, self.t)), self.sList, label="S", c= GREY)
         #self.axes2.plot(list(range(0, self.t)), self.eList, label="E", c= ORANGE)
@@ -424,7 +436,7 @@ class simpleNetworkSEIQRModel():
 
 if __name__=='__main__':
     #paramètres
-    b = 0.2
+    b = 0.17
     e = 1/4       # the latent period
     rho = 1/3     # I -> Q rate
     omega = 1/14  # I -> R rate
@@ -434,8 +446,8 @@ if __name__=='__main__':
     v = 0.1
     #IFR = 0.2  # infection fatality rate ( the number of deaths from a disease divided by the total number of cases. )
     #condition initiale   
-    S = 100
-    E = 1
+    S = 8000
+    E = 3
     I = 0
     Q = 0
     R = 0
