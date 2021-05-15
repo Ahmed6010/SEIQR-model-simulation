@@ -2,6 +2,7 @@
 import igraph
 import random
 import copy
+import math
 #import pylab as pl
 #import scipy
 #from scipy import random
@@ -31,7 +32,7 @@ BLACK = (0, 0, 0)          # dead"""
  
 #model constructor
 class simpleNetworkSEIQRModel():
-    def __init__(self, b, e, tau, rho, omega, kappa, sigma, v, S , E , I , Q , R , p , nei):        
+    def __init__(self, b, e, tau, rho, omega, kappa, sigma, v, S , E , I , Q , R ):    #, p , nei    
         # parameters
         self.b = b
         self.e = e
@@ -42,10 +43,10 @@ class simpleNetworkSEIQRModel():
         self.sigma = sigma
         self.v = v
         self.t = 0
-        self.p = p
+        #self.p = p
         self.N = S + E + I + Q + R
         #self.graph = igraph.Graph.Watts_Strogatz(1, self.N, nei=nei, p = p)
-        self.graph = nx.barabasi_albert_graph(self.N, 3)
+        self.graph = nx.barabasi_albert_graph(self.N, 2)
         #self.graph.simplify()
         self.adjacencyList = []
         for i in self.graph.nodes:
@@ -117,7 +118,7 @@ class simpleNetworkSEIQRModel():
             self.eAgentList.append(indexCase)
         
         # create plot
-        self.fig = plt.figure(figsize=(12, 5))
+        """self.fig = plt.figure(figsize=(12, 5))
         gs =  gridspec.GridSpec(ncols=2, nrows=1, figure=self.fig)
         self.axes = self.fig.add_subplot(gs[0, 1], projection="polar")
         self.axes.grid(False)
@@ -140,7 +141,7 @@ class simpleNetworkSEIQRModel():
         self.recovered_text = self.axes.annotate("\n\nRecovered: 0", xy=[3 * np.pi / 2, 1], ha="center", va="top", color=GREEN)
         self.deaths_text = self.axes.annotate("\nDeaths: 0", xy=[3 * np.pi / 2, 1], ha="center", va="top", color=BLACK)
         print(self.eAgentList)
-        
+        """
           
     def updateScatterPlot(self, i):
         if len(self.record) == 0:
@@ -177,11 +178,11 @@ class simpleNetworkSEIQRModel():
         return latentList
     
     def infectAgent(self, agent, num):
-        if num == 1:
-            infectionTime = self.t + (1/self.rho)
+        if num == 1:                            
+            infectionTime = self.t + random.choice(self.rho)
             heapq.heappush(self.infectedTimesHeap, (infectionTime, agent))
         if num == 2:
-            recoveryTime = self.t + (1/self.omega)
+            recoveryTime = self.t + random.choice(self.omega)
             heapq.heappush(self.recoveryTimesHeap, (recoveryTime, agent))
         if num == 3:  
             deathTime = self.t + (1/self.kappa)
@@ -240,38 +241,18 @@ class simpleNetworkSEIQRModel():
                 
             infectList = self.endLatent()
                 
-            for eAgent in infectList:
+            """for eAgent in infectList:
 
                 for agent in self.adjacencyList[eAgent]:
                     
                     if agent in self.sAgentList:
-                        if random.choice([0,1,2]):
-                            if (random.random() < self.b):                            
-                                newE += self.latentAgent(agent)
-                                tempEAgentList.append(agent)
-                            
-            
-            
-            
-            for iAgent in self.iAgentList:
-                rnd = random.random()
-                if rnd < 0.75:        
-                    self.infectAgent(iAgent, 1)
-                elif rnd < 0.99:
-                    recoverFromI.append(iAgent)
-                    self.infectAgent(iAgent, 2)
-                else:    
-                    self.infectAgent(iAgent, 3)
-
-            
-            quarantinedList = self.movingToQ()
-            
-            for qAgent in self.qAgentList:
-                rnd = random.random()
-                if rnd < 0.99:
-                    self.quarantinedAgent(qAgent, 1)
-                else:
-                    self.quarantinedAgent(qAgent, 2)
+                        #if random.choice([0,1,2,3]):
+                        if (random.random() < self.b):                            
+                            newE += self.latentAgent(agent)
+                            tempEAgentList.append(agent)
+                        """"""else:
+                            print('break')
+                            continue"""
             
             cn = 0
             for infectAgent in infectList:
@@ -279,8 +260,38 @@ class simpleNetworkSEIQRModel():
                 self.iAgentList.append(infectAgent)
                 self.agentCoordinates.update({infectAgent: RED})
                 cn += 1 
-
-            self.iRecord.append(self.iRecord[-1] + cn)
+            if len(self.iAgentList) != 0 and len(self.eAgentList) != 0:   
+                self.iRecord.append(self.iRecord[-1] + cn)
+            
+            
+            for iAgent in self.iAgentList:
+                for agent in self.adjacencyList[iAgent]:
+                    if agent in self.sAgentList:
+                        #if random.choice([0,1,2]):
+                        if (round(random.random(), 2) < self.b):                            
+                            newE += self.latentAgent(agent)
+                            tempEAgentList.append(agent)          
+                            
+                rnd = round(random.random(), 2)
+                if rnd < 0.75:        
+                    self.infectAgent(iAgent, 1)
+                elif rnd < 0.99:
+                    recoverFromI.append(iAgent)
+                    self.infectAgent(iAgent, 2)
+                else:    
+                    self.infectAgent(iAgent, 3)
+            
+            tempEAgentList = list( dict.fromkeys(tempEAgentList) )        
+            
+            quarantinedList = self.movingToQ()
+            
+            for qAgent in self.qAgentList:
+                rnd = round(random.random(), 2)
+                if rnd < 0.99:
+                    self.quarantinedAgent(qAgent, 1)
+                else:
+                    self.quarantinedAgent(qAgent, 2)
+            
             
                 
             deathList = self.deadAgents()
@@ -399,11 +410,12 @@ class simpleNetworkSEIQRModel():
             #self.allAgents = range(self.N)        modification
            
             #print("/////////////////////////////////////////////////////////////////////") 
-
+        #print(self.iRecord)    
         print(sys.getsizeof(self.record)) 
         self.timeList = list(range(0, self.t))
-        return [self.sList, self.eList, self.iList, self.qList, self.rList, self.newIList]  #, self.latencyTimesHeap
-    
+        #return [self.sList, self.eList, self.iList, self.qList, self.rList, self.newIList]  #, self.latencyTimesHeap
+        return self.iRecord
+        
     
     def scatterPlotAnimation(self):
         self.anim = animation.FuncAnimation(fig=self.fig, func=self.updateScatterPlot, interval=1000) # , blit=True
@@ -413,51 +425,74 @@ class simpleNetworkSEIQRModel():
         writer = Writer(fps=2, metadata={'artist': 'Me'}, bitrate=1800)
         #self.anim.save('Animation.mp4', writer)
     
-    def linePlot(self):
-        self.axes2.plot(self.iRecord, label="Simulated", c= RED)
-        exlFile = pd.read_excel('Covid19Data.xlsx',sheet_name='Alger') #, index_col=1
+    def linePlot(self, record):
+        self.fig2 = plt.figure()
+        self.axes3 = self.fig2.add_subplot()
+        plt.xlabel('Time (day)')
+        plt.ylabel('Nbr infected')
+        self.axes3.plot(record, label="Simulated", c= RED)
+        exlFile = pd.read_excel('Covid19Data.xlsx',sheet_name='Oran') #, index_col=1
         exlFile = exlFile.dropna()
         exlFile = exlFile.sort_index(ascending=False)
         realData = exlFile['Confirmed'].tolist()
-        #self.fig2 = plt.figure()
-        #print(realData)
-        #self.axes3 = self.fig2.add_subplot()
-        self.axes2.plot(realData[:self.t], label="Real data", c= GREEN)
-        #self.axes2.plot(list(range(0, self.t)), self.sList, label="S", c= GREY)
-        #self.axes2.plot(list(range(0, self.t)), self.eList, label="E", c= ORANGE)
-        #self.axes2.plot(list(range(0, self.t)), self.iList, label="I", c= RED)
-        #self.axes2.plot(list(range(0, self.t)), self.qList, label="Q", c= CYAN)
-        #self.axes2.plot(list(range(0, self.t)), self.rList, label="R", c= GREEN)
-        #self.axes2.plot(list(range(0, self.t)), self.dList, label="D", c= BLACK)
-
-        self.axes2.legend()
+        #print('real data', realData[:self.t])
+        #print('simu', self.iRecord)
+        self.axes3.plot(realData[:len(record)], label="Real data", c= GREEN)
+        """self.axes2.plot(list(range(0, self.t)), self.sList, label="S", c= GREY)
+        self.axes2.plot(list(range(0, self.t)), self.eList, label="E", c= YELLOW)
+        self.axes2.plot(list(range(0, self.t)), self.iList, label="I", c= RED)
+        self.axes2.plot(list(range(0, self.t)), self.qList, label="Q", c= CYAN)
+        self.axes2.plot(list(range(0, self.t)), self.rList, label="R", c= GREEN)
+        self.axes2.plot(list(range(0, self.t)), self.dList, label="D", c= BLACK)
+        self.axes2.legend()"""
+        self.axes3.legend()
             
-    #def nSimulation(self):    
-
+    
 if __name__=='__main__':
     #paramètres
-    b = 0.17
-    e = 1/4       # the latent period
-    rho = 1/3     # I -> Q rate
-    omega = 1/14  # I -> R rate
+    b = 0.06
+    e = 1/5       # the latent period   
+    rho = [3, 3, 3]     # I -> Q rate
+    omega = [7]  # I -> R rate, 16, 18, 20
     kappa = 1/8   # I -> D rate
     tau = 1/15    # Q -> R rate
     sigma = 1/4   # Q -> D rate  
     v = 0.1
     #IFR = 0.2  # infection fatality rate ( the number of deaths from a disease divided by the total number of cases. )
     #condition initiale   
-    S = 8000
-    E = 3
+    S = 5000
+    E = 5
     I = 0
     Q = 0
     R = 0
     # network settings
-    p = .6
-    nei = 4
-    myNetworkModel = simpleNetworkSEIQRModel(b, e, tau, rho, omega, kappa, sigma, v, S, E, I ,Q , R , p, nei)
+    #p = .6
+    #nei = 4
     
-    networkResults = myNetworkModel.run()
-    myNetworkModel.linePlot()
+    #record = []
+    nSimulation = 20
+    
+    for i in range(nSimulation):
+        myNetworkModel = simpleNetworkSEIQRModel(b, e, tau, rho, omega, kappa, sigma, v, S, E, I ,Q , R )  #, p, nei
+        if i == 0:
+            record = myNetworkModel.run()
+            #print(record)
+        else:
+            networkResults = myNetworkModel.run()
+            if len(record) < len(networkResults):
+                dif = len(networkResults) - len(record)
+                record.extend([record[-1]]*dif)
+            else:
+                dif = len(record) - len(networkResults)
+                networkResults.extend([networkResults[-1]]*dif)
+            record = [record[y] + networkResults[y] for y in range(len(record))]
+    print(record)        
+    record[:] = [math.ceil(x / nSimulation) for x in record]   
+    print(record) 
+    
+    #myNetworkModel = simpleNetworkSEIQRModel(b, e, tau, rho, omega, kappa, sigma, v, S, E, I ,Q , R )
+    #networkResults = myNetworkModel.run()
+    myNetworkModel.linePlot(record)
     myNetworkModel.scatterPlotAnimation()
     plt.show()
     
@@ -466,3 +501,4 @@ if __name__=='__main__':
     pl.ylabel('Nbr Infectes')
     
     pl.legend(), loc=(0.9, 0.9)"""
+    # ♠ •
