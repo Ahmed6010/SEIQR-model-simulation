@@ -22,26 +22,32 @@ import sys
 
 class Ui_MainWindow(object):
     def run_simulation(self):
-        # beta = float(self.lineEdit_Beta.text())  # transmission rate
-        # epsilon = float(self.lineEdit_Epsilon.text()) # the latent period    6, 7, 8, 9, 10
-        # rho = float(self.lineEdit_Rho.text())   # I -> Q rate          1/....
-        # omega = float(self.lineEdit_Omega.text())  # I -> R rate, 16, 18, 20, 10, 12, 14
-        # kappa = float(self.lineEdit_Kappa.text())   # I -> D rate
-        # tau =  float(self.lineEdit_Tau.text())   # Q -> R rate
-        # sigma = float(self.lineEdit_Sigma.text())  # Q -> D rate  
-        # #print(sigma)
-        # S = int(self.lineEdit_Susceptible.text())
-        # E = int(self.lineEdit_Infected.text())
-        # #print ("Clicked")
-        # I = 0
-        # Q = 0
-        # R = 0
-        # simulation_code = simpleNetworkSEIQRModel(beta, epsilon, rho, omega, kappa, tau, sigma, S, E, I, Q, R)
-        # self.end = simulation_code.mainn(beta, epsilon, rho, omega, kappa, tau, sigma, S, E, I, Q, R)
-        # if self.end == 100:
-            # self.movie.start()
-            # time.sleep(5)
-        self.mediaPlayer.play()
+        beta = float(self.lineEdit_Beta.text())  # transmission rate
+        epsilon = float(self.lineEdit_Epsilon.text()) # the latent period    6, 7, 8, 9, 10
+        rho = float(self.lineEdit_Rho.text())   # I -> Q rate          1/....
+        omega = float(self.lineEdit_Omega.text())  # I -> R rate, 16, 18, 20, 10, 12, 14
+        kappa = float(self.lineEdit_Kappa.text())   # I -> D rate
+        tau =  float(self.lineEdit_Tau.text())   # Q -> R rate
+        sigma = float(self.lineEdit_Sigma.text())  # Q -> D rate  
+        nSimul = int(self.lineEdit_nSimulation.text())
+        #print(sigma)
+        S = int(self.lineEdit_Susceptible.text())
+        E = int(self.lineEdit_Infected.text())
+        #print ("Clicked")
+        I = 0
+        Q = 0
+        R = 0
+        simulation_code = simpleNetworkSEIQRModel(beta, epsilon, rho, omega, kappa, tau, sigma, S, E, I, Q, R)
+        self.end = simulation_code.mainn(beta, epsilon, rho, omega, kappa, tau, sigma, S, E, I, Q, R, nSimul)
+        # emptyPlaylist = QMediaPlaylist()
+        self.playlist.clear()
+        if self.end == 100:
+            time.sleep(10)
+            self.playlist.addMedia(QMediaContent(QUrl().fromLocalFile('Animation.mp4')))
+            self.playlist.setPlaybackMode(QMediaPlaylist.Loop)
+            self.mediaPlayer.setPlaylist(self.playlist)
+            print("10s has gone")
+            self.mediaPlayer.play()
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -277,6 +283,23 @@ class Ui_MainWindow(object):
         self.lineEdit_Sigma.setObjectName("lineEdit_Sigma")
         self.gridLayout.addWidget(self.lineEdit_Sigma, 2, 3, 1, 1)
 
+        self.horizontalLayout_n = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_n.setObjectName("horizontalLayout")
+        self.lineEdit_nSimulation = QtWidgets.QLineEdit(self.widget_Inputs)
+        font = QtGui.QFont()
+        font.setPointSize(12)
+        self.lineEdit_nSimulation.setFont(font)
+        self.lineEdit_nSimulation.setStyleSheet("QLineEdit{\n"
+"    border: none;\n"
+"    border-bottom: 2px solid rgb(90, 249, 111);\n"
+"    color: rgb(0, 0, 0);\n"
+"    background-color: rgb(255, 255, 255);\n"
+"    padding: 3px;\n"
+"    width: 180px;\n"
+"}\n"
+"")
+        self.lineEdit_nSimulation.setObjectName("lineEdit_nSimulation")
+        self.horizontalLayout_n.addWidget(self.lineEdit_nSimulation)
         self.pushButton_Run = QtWidgets.QPushButton(self.widget_Inputs)
         font = QtGui.QFont()
         font.setPointSize(12)
@@ -291,7 +314,8 @@ class Ui_MainWindow(object):
 "\n"
 "")
         self.pushButton_Run.setObjectName("pushButton_Run")
-        self.gridLayout.addWidget(self.pushButton_Run, 2, 4, 1, 1)
+        self.horizontalLayout_n.addWidget(self.pushButton_Run)
+        self.gridLayout.addLayout(self.horizontalLayout_n, 2, 4, 1, 1)
 
 
         self.gridLayout_3.addLayout(self.gridLayout, 0, 0, 1, 1)
@@ -314,8 +338,9 @@ class Ui_MainWindow(object):
         self.gridLayout_4.setObjectName("gridLayout_4")
 
         self.mediaPlayer = QMediaPlayer(None, QMediaPlayer.VideoSurface)
-        self.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile('Animation.mp4')))
-
+        self.mediaPlayer.setMedia(QMediaContent())
+        self.playlist = QMediaPlaylist()
+        self.mediaPlayer.setPlaylist(self.playlist)
         # Set widget
         self.videoWidget = QVideoWidget(self.frame_animation)
         self.videoWidget.setGeometry(QtCore.QRect(0, 0, 611, 400))
@@ -507,6 +532,7 @@ class Ui_MainWindow(object):
         self.lineEdit_Beta.setPlaceholderText(_translate("MainWindow", "Beta (transmission rate)"))
         self.lineEdit_Kappa.setPlaceholderText(_translate("MainWindow", "Kappa (I -> D rate)"))
         self.lineEdit_Rho.setPlaceholderText(_translate("MainWindow", "Rho (I -> Q rate)"))
+        self.lineEdit_nSimulation.setPlaceholderText(_translate("MainWindow", "Number of simulation"))
         #self.label_rem1.setText(_translate("MainWindow", "TextLabel"))
         # self.pushButton_play.setText(_translate("MainWindow", "PushButton"))
         self.label_rem2.setText(_translate("MainWindow", "TextLabel"))
