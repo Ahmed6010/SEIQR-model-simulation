@@ -2,7 +2,9 @@
 
 ## Installation
 First, download this repository using the git clone command or from the Download button.
+
 Make sure that python is installed ( if you have 3.8.0 version or lower, you need to upgrade it )
+
 To make sure that the program work perfectly you need to install some libraries and tools with these commands and links:
 
 	pip install PySide2
