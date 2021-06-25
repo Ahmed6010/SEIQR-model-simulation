@@ -13,9 +13,11 @@ To make sure that the program work perfectly you need to install some libraries 
 	pip install pandas
 
 [FFmpeg](https://www.wikihow.com/Install-FFmpeg-on-Windows).
+
 [K-Lite Codec Pack](https://k-lite-codec-pack.en.uptodown.com/windows).
 
 ## Usage
 To run the program type in the cmd :
+
 	python main.py
 
